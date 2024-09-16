@@ -1,0 +1,62 @@
+server:
+  port: 8888
+app:
+  api-prefix: /api/v1
+spring:
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      routes:
+        - id: identity-service
+          uri: lb://identity-service
+          predicates:
+            - Path=${app.api-prefix}/identity/**
+          filters:
+            - StripPrefix=2
+            - name: AuthenticationFilter
+              args:
+                excludedPaths:
+                  - ${app.api-prefix}/identity/auth/.*
+
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=${app.api-prefix}/order/**
+          filters:
+            - StripPrefix=2
+            - name: AuthenticationFilter
+
+
+        - id: restaurant-service
+          uri: lb://restaurant-service
+          predicates:
+            - Path=${app.api-prefix}/restaurant/external/**
+          filters:
+            - StripPrefix=2
+            - name: AuthenticationFilter
+              args:
+                excludedPaths:
+                  - ${app.api-prefix}/restaurant/external/categories
+
+        - id: rating-service
+          uri: lb://rating-service
+          predicates:
+            - Path=${app.api-prefix}/rating/external/**
+          filters:
+            - StripPrefix=2
+            - name: AuthenticationFilter
+
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=${app.api-prefix}/notification/**
+          filters:
+            - StripPrefix=2
+            - name: AuthenticationFilter
+              args:
+                excludedPaths:
+                  - ${app.api-prefix}/notification/email/send
+
+client:
+  url: http://localhost:3000
